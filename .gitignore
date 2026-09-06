@@ -1,0 +1,29 @@
+# Compiled class files
+bin/
+*.class
+
+# Maven build output
+target/
+
+# Package Files
+*.jar
+*.war
+*.ear
+!lib/*.jar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini

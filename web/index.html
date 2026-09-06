@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arcadia — Player Management & Combat Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Auth Screen Overlay -->
+  <section class="auth-screen" id="auth-screen">
+    <form class="auth-card" id="auth-form">
+      <div class="auth-brand">
+        <span class="mark">A</span>
+        <span>ARCADIA</span>
+      </div>
+      <h2 id="auth-title">Log in to your account</h2>
+      <p class="muted" id="auth-copy">Enter your credentials to access your characters and combat records.</p>
+      
+      <div id="register-name" hidden>
+        <label>Player Name</label>
+        <input name="name" maxlength="50" placeholder="e.g. Valerius" />
+      </div>
+
+      <label>Email Address</label>
+      <input required name="email" type="email" placeholder="player@example.com" />
+
+      <label>Password</label>
+      <input required name="password" type="password" placeholder="••••••••" />
+
+      <p class="auth-error" id="auth-error"></p>
+
+      <button class="btn-primary" style="width: 100%; margin-top: 14px;" id="auth-submit">Log in</button>
+      <button class="btn-secondary" style="width: 100%; margin-top: 8px; font-size: 12px;" type="button" id="auth-switch">New player? Create an account</button>
+    </form>
+  </section>
+
+  <!-- Main Shell -->
+  <div class="shell">
+
+    <!-- Minimalist Sidebar -->
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard">
+        <span class="brand-mark">A</span>
+        <span>ARCADIA</span>
+      </a>
+
+      <nav class="sidebar-nav" aria-label="Main navigation">
+        <button class="nav-link active" data-view="dashboard"><span class="icon">▦</span> Overview</button>
+        <button class="nav-link" data-view="arena"><span class="icon">⚔</span> Combat Arena</button>
+        <button class="nav-link" data-view="characters"><span class="icon">♜</span> Characters</button>
+        <button class="nav-link" data-view="inventory"><span class="icon">◇</span> Inventory</button>
+        <button class="nav-link" data-view="leaderboard"><span class="icon">↟</span> Leaderboard</button>
+        <button class="nav-link" data-view="achievements"><span class="icon">✦</span> Achievements</button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-link logout-nav" id="sidebar-logout"><span class="icon">↪</span> Log out</button>
+      </div>
+    </aside>
+
+    <!-- Content Workspace -->
+    <main class="content">
+
+      <!-- Top Header Bar -->
+      <header class="topbar">
+        <div class="page-header">
+          <h1 id="page-title">Command Center</h1>
+          <p id="page-subtitle">Player session active</p>
+        </div>
+
+        <div class="user-panel">
+          <div class="pill-badge">
+            <span class="dot"></span>
+            <span>COINS: <b id="header-coins">0</b></span>
+          </div>
+
+          <div class="user-profile">
+            <span class="avatar-badge" id="header-avatar">PL</span>
+            <span style="font-weight: 600; font-size: 13px;" id="header-name">Player</span>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">Lv.<span id="header-level">1</span></span>
+          </div>
+
+          <button class="btn-danger" id="logout-btn" type="button">Log out</button>
+        </div>
+      </header>
+
+      <!-- ================= VIEW 1: OVERVIEW ================= -->
+      <section class="view active" id="dashboard">
+        <!-- Minimal Metrics Strip -->
+        <div class="metrics-strip">
+          <div class="metric-box">
+            <div class="metric-label">Account Level</div>
+            <div class="metric-value" id="stat-level">1</div>
+            <div class="metric-sub" id="stat-xp-copy">0 / 100 XP</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Coins</div>
+            <div class="metric-value" id="stat-coins">100</div>
+            <div class="metric-sub">Vault balance</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">High Score</div>
+            <div class="metric-value" id="stat-score">0</div>
+            <div class="metric-sub">Personal record</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Arena Rank</div>
+            <div class="metric-value" id="stat-rank">—</div>
+            <div class="metric-sub">Global standing</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Active Roster</div>
+            <div class="metric-value" id="stat-roster-count">0</div>
+            <div class="metric-sub">Characters ready</div>
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Active Combat / Hero Card -->
+          <div class="card-panel">
+            <div class="panel-header">
+              <span class="panel-title">Combat Readiness</span>
+              <button class="btn-primary" data-view="arena">Enter Combat Arena ⚔</button>
+            </div>
+            <p class="muted" style="margin-bottom: 14px;">Select your champion and deploy to test your attack, defense, and class abilities against dungeon foes.</p>
+            
+            <div id="overview-hero-preview" style="background: var(--bg); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 14px;">
+              <p class="muted">No character selected. Create or select a character to enter combat.</p>
+            </div>
+          </div>
+
+          <!-- Leaderboard Summary -->
+          <div class="card-panel">
+            <div class="panel-header">
+              <span class="panel-title">Top Players</span>
+              <button class="btn-secondary" data-view="leaderboard">View Full Board</button>
+            </div>
+            <div id="overview-board-list">
+              <p class="muted">Loading leaderboard...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 2: COMBAT ARENA ================= -->
+      <section class="view" id="arena">
+        <div class="arena-container">
+          
+          <!-- Setup Bar -->
+          <div class="arena-setup-bar">
+            <div style="flex: 1;">
+              <label style="margin: 0 0 4px;">Choose Fighter</label>
+              <select id="arena-character-select">
+                <option value="">Select a character...</option>
+              </select>
+            </div>
+
+            <div style="flex: 1;">
+              <label style="margin: 0 0 4px;">Choose Opponent</label>
+              <select id="arena-enemy-select">
+                <option value="Training Dummy">Training Dummy (Easy · 40 HP)</option>
+                <option value="Goblin Scout" selected>Goblin Scout (Normal · 60 HP)</option>
+                <option value="Stone Golem">Stone Golem (Hard · 120 HP)</option>
+                <option value="Dread Knight">Dread Knight (Elite · 180 HP)</option>
+                <option value="Archdemon">Archdemon (Boss · 260 HP)</option>
+              </select>
+            </div>
+
+            <div style="padding-top: 18px;">
+              <button class="btn-primary" id="start-battle-btn">Start Encounter</button>
+            </div>
+          </div>
+
+          <!-- Active Combat Stage -->
+          <div class="arena-stage" id="arena-stage" style="display: none;">
+            <!-- Player Fighter -->
+            <div class="fighter-box" id="fighter-card">
+              <span class="fighter-tag" id="f-tag">PLAYER</span>
+              <div class="fighter-name" id="f-name">Hero</div>
+              <div class="fighter-class" id="f-class">Warrior · Level 1</div>
+              
+              <div class="hp-indicator">
+                <span>Health</span>
+                <span id="f-hp-text">100 / 100</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill success" id="f-hp-bar" style="width: 100%;"></div>
+              </div>
+
+              <div class="fighter-stats-row">
+                <span>ATK <b id="f-atk">12</b></span>
+                <span>DEF <b id="f-def">10</b></span>
+                <span id="f-guard-status" style="margin-left: auto; color: var(--accent); display: none;">🛡 GUARDING</span>
+              </div>
+            </div>
+
+            <!-- VS Divider -->
+            <div class="arena-vs">
+              <div class="vs-circle">VS</div>
+            </div>
+
+            <!-- Enemy Fighter -->
+            <div class="fighter-box" id="enemy-card">
+              <span class="fighter-tag" style="color: var(--danger);">ENEMY</span>
+              <div class="fighter-name" id="e-name">Goblin Scout</div>
+              <div class="fighter-class" id="e-threat">Dungeon Threat</div>
+
+              <div class="hp-indicator">
+                <span>Health</span>
+                <span id="e-hp-text">60 / 60</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill danger" id="e-hp-bar" style="width: 100%;"></div>
+              </div>
+
+              <div class="fighter-stats-row">
+                <span>STATUS: <b id="e-status">Active</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Combat Actions Palette -->
+          <div class="combat-actions-bar" id="combat-actions" style="display: none;">
+            <button class="btn-combat btn-combat-attack" id="act-attack" title="Deal standard attack damage">
+              <span>⚔</span> Attack
+            </button>
+            <button class="btn-combat btn-combat-defend" id="act-defend" title="Double defense & recover stamina">
+              <span>🛡</span> Defend
+            </button>
+            <button class="btn-combat btn-combat-special" id="act-special" title="Unleash class special ability">
+              <span>✦</span> Special Skill
+            </button>
+            <button class="btn-combat btn-combat-heal" id="act-heal" title="Consume Elixir (+40 HP, costs 20 coins)">
+              <span>🧪</span> Elixir (20c)
+            </button>
+            <button class="btn-secondary" id="act-reset">
+              ⚑ Reset
+            </button>
+          </div>
+
+          <!-- Combat Log Terminal -->
+          <div class="card-panel" id="combat-log-panel" style="display: none;">
+            <div class="panel-header">
+              <span class="panel-title">Combat Ledger</span>
+              <span style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);" id="combat-turn-count">Turn 1</span>
+            </div>
+            <div class="combat-console" id="combat-log">
+              <div class="log-line system">> Encounter initiated. Choose an action.</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= VIEW 3: CHARACTERS ================= -->
+      <section class="view" id="characters">
+        <div class="panel-header">
+          <div>
+            <h2 style="font-size: 16px; font-weight: 600;">Character Roster</h2>
+            <p class="muted">Characters created under your account.</p>
+          </div>
+          <button class="btn-primary" id="add-character">+ Create Character</button>
+        </div>
+
+        <div class="item-grid" id="character-list" style="margin-top: 16px;"></div>
+      </section>
+
+      <!-- ================= VIEW 4: INVENTORY ================= -->
+      <section class="view" id="inventory">
+        <div class="panel-header">
+          <div>
+            <h2 style="font-size: 16px; font-weight: 600;">Equipment & Armory</h2>
+            <p class="muted">Weapons forged or looted in Arcadia.</p>
+          </div>
+          <button class="btn-primary" id="add-item">+ Add Weapon</button>
+        </div>
+
+        <div class="item-grid" id="inventory-list" style="margin-top: 16px;"></div>
+      </section>
+
+      <!-- ================= VIEW 5: LEADERBOARD ================= -->
+      <section class="view" id="leaderboard">
+        <div class="panel-header">
+          <div>
+            <h2 style="font-size: 16px; font-weight: 600;">Global Leaderboard</h2>
+            <p class="muted">Top ranked players calculated automatically after every score submission.</p>
+          </div>
+          <button class="btn-secondary" id="submit-score">+ Submit Score</button>
+        </div>
+
+        <div class="card-panel" style="margin-top: 16px; padding: 0;">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">Rank</th>
+                <th>Player</th>
+                <th style="text-align: right; width: 140px;">High Score</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 6: ACHIEVEMENTS ================= -->
+      <section class="view" id="achievements">
+        <div class="panel-header">
+          <div>
+            <h2 style="font-size: 16px; font-weight: 600;">Player Achievements</h2>
+            <p class="muted">Milestones and combat accolades recorded in the database.</p>
+          </div>
+          <span class="pill-badge" id="achievement-count">0 / 0 Unlocked</span>
+        </div>
+
+        <div class="item-grid" id="achievement-list" style="margin-top: 16px;"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Shared Creation Modal -->
+  <dialog id="modal">
+    <div class="dialog-header">
+      <h3 id="modal-title">Create</h3>
+      <button class="close-btn" id="modal-close">×</button>
+    </div>
+    <form id="modal-form">
+      <div id="form-fields"></div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;">
+        <button type="button" class="btn-secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn-primary" id="save-form">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Notification Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
