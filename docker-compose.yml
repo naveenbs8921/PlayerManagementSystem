@@ -22,7 +22,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/game_db?useSSL=false&serverTimezone=UTC
+      DB_URL: jdbc:mysql://mysql:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       DB_USER: root
       DB_PASSWORD: rootpass
     stdin_open: true   # keeps the console menu's Scanner usable

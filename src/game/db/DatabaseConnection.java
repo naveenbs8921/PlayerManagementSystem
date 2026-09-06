@@ -14,7 +14,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final String URL = getEnvOrDefault(
-            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&serverTimezone=UTC");
+            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
     private static final String USER = getEnvOrDefault("DB_USER", "root");
     private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "");
 
