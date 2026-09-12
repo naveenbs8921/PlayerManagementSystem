@@ -14,7 +14,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final String URL = getEnvOrDefault(
-            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC");
     private static final String USER = getEnvOrDefault("DB_USER", "root");
     private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "");
 
@@ -29,26 +29,37 @@ public class DatabaseConnection {
         return (value == null || value.isBlank()) ? fallback : value;
     }
 
-    public static Connection getConnection() throws SQLException {
-        if (connection == null || connection.isClosed()) {
+    public static synchronized Connection getConnection() throws SQLException {
+        if (connection == null || connection.isClosed() || !isConnectionValid()) {
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
             } catch (ClassNotFoundException e) {
                 throw new SQLException("MySQL JDBC driver not found on classpath. " +
                         "Add mysql-connector-j-<version>.jar to your classpath.", e);
             }
+            DriverManager.setLoginTimeout(5);
             connection = DriverManager.getConnection(URL, USER, PASSWORD);
         }
         return connection;
     }
 
-    public static void closeConnection() {
+    private static boolean isConnectionValid() {
+        try {
+            return connection != null && !connection.isClosed() && connection.isValid(2);
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    public static synchronized void closeConnection() {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
             }
         } catch (SQLException e) {
             System.err.println("Error closing connection: " + e.getMessage());
+        } finally {
+            connection = null;
         }
     }
 }

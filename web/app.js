@@ -40,20 +40,58 @@ const esc = s => String(s ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': 
 
 // --- API Helper ---
 async function api(path, values) {
-  const r = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(values)
-  });
-  const d = await r.json();
-  if (!r.ok) throw new Error(d.error || 'Request failed.');
+  let r;
+  try {
+    r = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(values)
+    });
+  } catch (netErr) {
+    throw new Error('Connection failed: Cannot reach the backend. Check port forwarding or restart docker compose.');
+  }
+
+  if (r.status === 504) {
+    throw new Error('504 Gateway Timeout: Database request timed out. Make sure MySQL is running in Docker ("docker compose up").');
+  }
+
+  let d;
+  try {
+    d = await r.json();
+  } catch (parseErr) {
+    if (!r.ok) {
+      throw new Error(`Server returned error ${r.status} (${r.statusText || 'Gateway Error'}).`);
+    }
+    throw new Error('Invalid response from server.');
+  }
+
+  if (!r.ok) throw new Error(d.error || `Request failed with status ${r.status}.`);
   return d;
 }
 
 // --- Load Player Dashboard ---
 async function load(id) {
-  const r = await fetch(`/api/dashboard?playerId=${encodeURIComponent(id)}`);
-  const d = await r.json();
+  let r;
+  try {
+    r = await fetch(`/api/dashboard?playerId=${encodeURIComponent(id)}`);
+  } catch (netErr) {
+    throw new Error('Connection failed: Backend server unreachable.');
+  }
+
+  if (r.status === 504) {
+    throw new Error('504 Gateway Timeout: Database request timed out.');
+  }
+
+  let d;
+  try {
+    d = await r.json();
+  } catch (parseErr) {
+    if (!r.ok) {
+      throw new Error(`Server returned error ${r.status}.`);
+    }
+    throw new Error('Invalid response from server.');
+  }
+
   if (!r.ok) throw new Error(d.error || 'Could not load player.');
   state = d;
   playerId = String(id);
@@ -464,13 +502,33 @@ $('#auth-switch').onclick = () => {
 
 $('#auth-form').addEventListener('submit', async e => {
   e.preventDefault();
+  const btn = $('#auth-submit');
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = registering ? 'Creating account...' : 'Logging in...';
+  $('#auth-error').textContent = '';
+
   const v = Object.fromEntries(new FormData(e.currentTarget));
+  if (registering && (!v.name || !v.name.trim())) {
+    $('#auth-error').textContent = 'Please enter a Player Name.';
+    btn.disabled = false;
+    btn.textContent = originalText;
+    return;
+  }
+
   try {
     const d = await api(registering ? '/api/register' : '/api/login', v);
     await load(d.id);
     toast(registering ? 'Account created.' : 'Logged in.');
   } catch (err) {
-    $('#auth-error').textContent = err.message;
+    if (err.message && (err.message.includes('fetch') || err.message.includes('NetworkError'))) {
+      $('#auth-error').textContent = 'Cannot connect to server. Make sure "docker compose up" is running in Codespaces!';
+    } else {
+      $('#auth-error').textContent = err.message || 'Authentication failed.';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 });
 

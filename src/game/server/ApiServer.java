@@ -39,8 +39,7 @@ public final class ApiServer {
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/", this::handle);
-        // The original DatabaseConnection is a single shared connection, so keep requests ordered.
-        server.setExecutor(Executors.newSingleThreadExecutor());
+        server.setExecutor(Executors.newFixedThreadPool(8));
         server.start();
         System.out.printf("%nArcadia is running at http://localhost:%d%nPress Ctrl+C to stop it.%n", port);
     }
@@ -54,7 +53,7 @@ public final class ApiServer {
                 staticFile(exchange, path);
             }
         } catch (SQLException e) {
-            json(exchange, 500, "{\"error\":\"Database error: " + escape(e.getMessage()) + "\"}");
+            json(exchange, 503, "{\"error\":\"Database unavailable: " + escape(e.getMessage()) + "\"}");
         } catch (IllegalArgumentException e) {
             json(exchange, 400, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
         } catch (Exception e) {
