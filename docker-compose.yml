@@ -2,8 +2,11 @@ services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    command:
+      - --host-cache-size=0
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: game_db
     ports:
       - "3306:3306"
@@ -11,7 +14,7 @@ services:
       - db_data:/var/lib/mysql
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-prootpass"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -23,7 +26,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC
+      DB_URL: "jdbc:mysql://mysql:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC"
       DB_USER: root
       DB_PASSWORD: rootpass
     stdin_open: true   # keeps the console menu's Scanner usable
