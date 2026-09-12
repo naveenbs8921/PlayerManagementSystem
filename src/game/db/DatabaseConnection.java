@@ -14,7 +14,7 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     private static final String URL = getEnvOrDefault(
-            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC");
+            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
     private static final String USER = getEnvOrDefault("DB_USER", "root");
     private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "rootpass");
 
@@ -37,7 +37,6 @@ public class DatabaseConnection {
                 throw new SQLException("MySQL JDBC driver not found on classpath. " +
                         "Add mysql-connector-j-<version>.jar to your classpath.", e);
             }
-            DriverManager.setLoginTimeout(5);
             try {
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
             } catch (SQLException e) {
