@@ -53,7 +53,11 @@ public final class ApiServer {
                 staticFile(exchange, path);
             }
         } catch (SQLException e) {
-            json(exchange, 503, "{\"error\":\"Database unavailable: " + escape(e.getMessage()) + "\"}");
+            String details = e.getMessage();
+            if (e.getCause() != null && e.getCause().getMessage() != null) {
+                details += " [" + e.getCause().getMessage() + "]";
+            }
+            json(exchange, 503, "{\"error\":\"Database unavailable: " + escape(details) + "\"}");
         } catch (IllegalArgumentException e) {
             json(exchange, 400, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
         } catch (Exception e) {
