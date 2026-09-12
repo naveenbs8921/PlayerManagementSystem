@@ -54,6 +54,7 @@ public final class ApiServer {
                 staticFile(exchange, path);
             }
         } catch (SQLException e) {
+            e.printStackTrace();
             String details = e.getMessage();
             if (e.getCause() != null && e.getCause().getMessage() != null) {
                 details += " [" + e.getCause().getMessage() + "]";

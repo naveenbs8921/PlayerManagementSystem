@@ -2,11 +2,14 @@ services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    command:
+      - --skip-name-resolve
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_ROOT_HOST: "%"
       MYSQL_DATABASE: game_db
     ports:
+      - "8080:8080"
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
@@ -20,18 +23,17 @@ services:
 
   app:
     build: .
+    network_mode: service:mysql
     depends_on:
       mysql:
         condition: service_healthy
     environment:
       JAVA_TOOL_OPTIONS: "-Djava.net.preferIPv4Stack=true"
-      DB_URL: "jdbc:mysql://mysql:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=10000&socketTimeout=15000&serverTimezone=UTC"
+      DB_URL: "jdbc:mysql://127.0.0.1:3306/game_db?allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC"
       DB_USER: root
       DB_PASSWORD: rootpass
     stdin_open: true   # keeps the console menu's Scanner usable
     tty: true
-    ports:
-      - "8080:8080"
 
 volumes:
   db_data:
