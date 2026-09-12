@@ -13,8 +13,12 @@ import java.sql.SQLException;
  */
 public class DatabaseConnection {
 
+    static {
+        System.setProperty("java.net.preferIPv4Stack", "true");
+    }
+
     private static final String URL = getEnvOrDefault(
-            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC");
+            "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=10000&socketTimeout=15000&serverTimezone=UTC");
     private static final String USER = getEnvOrDefault("DB_USER", "root");
     private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "rootpass");
 
@@ -31,6 +35,8 @@ public class DatabaseConnection {
 
     public static synchronized Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed() || !isConnectionValid()) {
+            System.out.println("[Arcadia DB] Connecting to: " + URL + " (user: " + USER + ")...");
+            long start = System.currentTimeMillis();
             try {
                 Class.forName("com.mysql.cj.jdbc.Driver");
             } catch (ClassNotFoundException e) {
@@ -39,8 +45,11 @@ public class DatabaseConnection {
             }
             try {
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                System.out.println("[Arcadia DB] Connected successfully in " + (System.currentTimeMillis() - start) + "ms!");
             } catch (SQLException e) {
+                System.err.println("[Arcadia DB Error] Failed connecting to " + URL + ": " + e.getMessage());
                 if ("rootpass".equals(PASSWORD) && e.getMessage() != null && e.getMessage().contains("Access denied")) {
+                    System.out.println("[Arcadia DB] Retrying with empty password for local dev...");
                     connection = DriverManager.getConnection(URL, USER, "");
                 } else {
                     throw e;

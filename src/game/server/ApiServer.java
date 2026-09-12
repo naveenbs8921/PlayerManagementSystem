@@ -45,8 +45,9 @@ public final class ApiServer {
     }
 
     private void handle(HttpExchange exchange) throws IOException {
+        String path = exchange.getRequestURI().getPath();
+        System.out.println("[Arcadia HTTP] " + exchange.getRequestMethod() + " " + path);
         try {
-            String path = exchange.getRequestURI().getPath();
             if (path.startsWith("/api/")) {
                 api(exchange, path);
             } else {
