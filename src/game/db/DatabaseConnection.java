@@ -16,7 +16,7 @@ public class DatabaseConnection {
     private static final String URL = getEnvOrDefault(
             "DB_URL", "jdbc:mysql://localhost:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000&socketTimeout=10000&serverTimezone=UTC");
     private static final String USER = getEnvOrDefault("DB_USER", "root");
-    private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "");
+    private static final String PASSWORD = getEnvOrDefault("DB_PASSWORD", "rootpass");
 
     private static Connection connection;
 
@@ -38,7 +38,15 @@ public class DatabaseConnection {
                         "Add mysql-connector-j-<version>.jar to your classpath.", e);
             }
             DriverManager.setLoginTimeout(5);
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            try {
+                connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            } catch (SQLException e) {
+                if ("rootpass".equals(PASSWORD) && e.getMessage() != null && e.getMessage().contains("Access denied")) {
+                    connection = DriverManager.getConnection(URL, USER, "");
+                } else {
+                    throw e;
+                }
+            }
         }
         return connection;
     }
